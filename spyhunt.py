@@ -46,17 +46,17 @@ warnings.filterwarnings(action='ignore',module='bs4')
 
 requests.packages.urllib3.disable_warnings()
 
+
 banner = """
-
-
-███████╗██████╗ ██╗   ██╗██╗  ██╗██╗   ██╗███╗   ██╗████████╗
-██╔════╝██╔══██╗╚██╗ ██╔╝██║  ██║██║   ██║████╗  ██║╚══██╔══╝
-███████╗██████╔╝ ╚████╔╝ ███████║██║   ██║██╔██╗ ██║   ██║   
-╚════██║██╔═══╝   ╚██╔╝  ██╔══██║██║   ██║██║╚██╗██║   ██║   
-███████║██║        ██║   ██║  ██║╚██████╔╝██║ ╚████║   ██║   
-╚══════╝╚═╝        ╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝   ╚═╝
-V 2.4
-By c0deninja
+██████╗ ██╗ ██████╗  █████╗     ██╗  ██╗ █████╗  ██████╗██╗  ██╗███████╗
+██╔══██╗██║██╔════╝ ██╔══██╗    ██║  ██║██╔══██╗██╔════╝██║ ██╔╝██╔════╝
+██████╔╝██║██║  ███╗███████║    ███████║███████║██║     █████╔╝ ███████╗
+██╔═══╝ ██║██║   ██║██╔══██║    ██╔══██║██╔══██║██║     ██╔═██╗ ╚════██║
+██║     ██║╚██████╔╝██║  ██║    ██║  ██║██║  ██║╚██████╗██║  ██╗███████║
+╚═╝     ╚═╝ ╚═════╝ ╚═╝  ╚═╝    ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚══════╝
+                                                                                                       
+V 1.0
+By PigaHacks
 
 """
 
@@ -338,7 +338,31 @@ if args.s:
         certshout = certshout.decode()
         with open(f"{args.save}", "a") as certsh:
             certsh.writelines(certshout)
-
+        
+       
+        # Call subdomains.py script for deep subdomain enumeration if specified
+        if args.deep_subdomain:
+            from scripts import subdomains
+            
+            print(Fore.CYAN + "Performing deep subdomain enumeration using subdomains.py...")
+            
+            def write_to_file(subdomains_list):
+                # Write subdomains from deep scan to file
+                with open(f"{args.save}", "a") as subdomains_file:
+                    for subdomain in subdomains_result:
+                        subdomains_file.write(f"{subdomain}\n")
+                    print(Fore.GREEN + f"Added {len(subdomains_result)} subdomains from deep scan")
+            
+            # Use ThreadPoolExecutor for concurrent execution
+            with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+                future = executor.submit(subdomains.scan, args.s, 10)  # Using 10 threads
+                subdomains_result = future.result()
+            
+            if subdomains_result:
+                write_to_file(subdomains_result)
+                print(Fore.GREEN + f"Added {len(subdomains_result)} subdomains from deep scan")
+            else:
+                print(Fore.YELLOW + "No additional subdomains found in deep scan")
         # Shodan subdomain extraction
         if args.shodan_api:
             api = shodan.Shodan(args.shodan_api)
